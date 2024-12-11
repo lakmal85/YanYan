@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced UI for Data Management</title>
+    <style>
+        /* Global Styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #28a745, #ffd700, #00008b, #800000, #ffffff);
+            background-size: 400% 400%;
+            animation: gradientAnimation 10s ease infinite;
+            color: #333;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 25% 50%; }
+            50% { background-position: 50% 50%; }
+            75% { background-position: 75% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        form input:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+            outline: none;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 1rem;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #28a745;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #ffe4b2;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="logo.png" alt="Company Logo">
+        </div>
+        <h1>Yan Lanka User Management</h1>
+        <form id="dataForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="province">Province:</label>
+            <input type="text" id="province" name="province" required>
+
+            <label for="contact">Contact Number:</label>
+            <input type="text" id="contact" name="contact" required>
+
+            <label for="note">Note:</label>
+            <input type="text" id="note" name="note">
+
+            <label for="user">User Name:</label>
+            <select id="user" name="user" required>
+                <option value="Lakmal Sanjeewa Jayawickrama">Lakmal Sanjeewa Jayawickrama</option>
+                <option value="Geethaj Kelum Ramawickrama">Geethaj Kelum Ramawickrama</option>
+                <option value="Sameera Tharanga Premananda">Sameera Tharanga Premananda</option>
+            </select>
+
+            <button type="submit">Save</button>
+        </form>
+
+        <div id="message" class="error"></div>
+
+        <h2>Saved Records</h2>
+        <button id="deleteSelectedBtn" onclick="deleteSelectedRows()">Delete Selected Rows</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll" onclick="selectAllCheckboxes()"></th>
+                    <th>No</th>
+                    <th>Name</th>
+                    <th>Province</th>
+                    <th>Contact Number</th>
+                    <th>Note</th>
+                    <th>Contact Status</th>
+                    <th>User</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody id="recordTable">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const form = document.getElementById('dataForm');
+        const messageDiv = document.getElementById('message');
+        const recordTable = document.getElementById('recordTable');
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+        let records = JSON.parse(localStorage.getItem('records')) || [];
+
+        function renderRecords() {
+            recordTable.innerHTML = '';
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                
+                // Apply colors based on the contact status
+                switch (record.status) {
+                    case 'Not Contacted':
+                        row.style.backgroundColor = '#ff7f00'; // Orange
+                        break;
+                    case 'Contacted':
+                        row.style.backgroundColor = '#ffff00'; // Yellow
+                        break;
+                    case 'pending':
+                        row.style.backgroundColor = '#0000ff'; // Blue
+                        break;
+                    case 'Job Completed':
+                        row.style.backgroundColor = '#90ee90'; // Light Green
+                        break;
+                    default:
+                        row.style.backgroundColor = '#ffffff'; // Default White
+                }
+
+                row.innerHTML = `
+                    <td><input type="checkbox" class="recordCheckbox" data-index="${index}"></td>
+                    <td>${index + 1}</td>
+                    <td>${record.name}</td>
+                    <td>${record.province}</td>
+                    <td>${record.contact}</td>
+                    <td>${record.note}</td>
+                    <td>
+                        <select onchange="updateContactStatus('${record.contact}', this.value)">
+                            <option value="Not Contacted" ${record.status === 'Not Contacted' ? 'selected' : ''}>Not Contacted</option>
+                            <option value="Contacted" ${record.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
+                            <option value="pending" ${record.status === 'pending' ? 'selected' : ''}>pending</option>
+                            <option value="Job Completed" ${record.status === 'Job Completed' ? 'selected' : ''}>Job Completed</option>
+                        </select>
+                    </td>
+                    <td>${record.user}</td>
+                    <td>${record.timestamp}</td>
+                `;
+                recordTable.appendChild(row);
+            });
+        }
+
+        function updateContactStatus(contact, status) {
+            const record = records.find(r => r.contact === contact);
+            if (record) {
+                record.status = status;
+                localStorage.setItem('records', JSON.stringify(records));
+                renderRecords();
+            }
+        }
+
+        function selectAllCheckboxes() {
+            const checkboxes = document.querySelectorAll('.recordCheckbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        }
+
+        function deleteSelectedRows() {
+            const selectedCheckboxes = document.querySelectorAll('.recordCheckbox:checked');
+            if (selectedCheckboxes.length > 0) {
+                selectedCheckboxes.forEach(checkbox => {
+                    const index = checkbox.getAttribute('data-index');
+                    records.splice(index, 1);
+                });
+
+                localStorage.setItem('records', JSON.stringify(records));
+                renderRecords();
+            } else {
+                messageDiv.textContent = 'Please select rows to delete.';
+            }
+        }
+
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            const name = form.name.value.trim();
+            const province = form.province.value.trim();
+            const contact = form.contact.value.trim();
+            const note = form.note.value.trim();
+            const user = form.user.value.trim();
+
+            if (records.some(record => record.contact === contact)) {
+                messageDiv.textContent = 'Duplicate contact number. Record not saved.';
+                return;
+            }
+
+            const timestamp = new Date().toLocaleString();
+
+            const newRecord = { name, province, contact, note, user, status: 'Not Contacted', timestamp };
+            records.push(newRecord);
+            localStorage.setItem('records', JSON.stringify(records));
+
+            messageDiv.textContent = '';
+            form.reset();
+            renderRecords();
+        });
+
+        renderRecords();
+    </script>
+</body>
+</html>
